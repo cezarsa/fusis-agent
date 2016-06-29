@@ -1,9 +1,11 @@
 package agent
 
 import (
+	"errors"
 	"log"
 	"net"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/tsuru/go-dockerclient"
@@ -18,9 +20,23 @@ type Agent struct {
 	doneCh       chan struct{}
 	quitCh       chan struct{}
 	dockerClient *docker.Client
+	applier      agentApplier
+}
+
+type agentApplier interface {
+	Apply(ips []string, fusisAddr string) error
 }
 
 func (a *Agent) Init() error {
+	if a.FusisAddress == "" {
+		return errors.New("fusis address is mandatory")
+	}
+	if a.LabelFilter == "" {
+		return errors.New("label filter is mandatory")
+	}
+	if a.Interval == 0 {
+		return errors.New("interval is mandatory")
+	}
 	a.doneCh = make(chan struct{})
 	a.quitCh = make(chan struct{})
 	dialer := &net.Dialer{
@@ -43,6 +59,7 @@ func (a *Agent) Init() error {
 	}
 	a.dockerClient.Dialer = dialer
 	a.dockerClient.HTTPClient = httpClient
+	a.applier = &natApplier{}
 	return nil
 }
 
@@ -56,6 +73,7 @@ func (a *Agent) Stop() {
 
 func (a *Agent) Wait() {
 	<-a.quitCh
+	a.quitCh = make(chan struct{})
 }
 
 func (a *Agent) spin() {
@@ -68,12 +86,26 @@ func (a *Agent) spin() {
 		if err != nil {
 			log.Printf("error listing containers: %s", err.Error())
 		}
+		var ips []string
 		for _, c := range conts {
+			var ip string
 			bridge, ok := c.Networks.Networks["bridge"]
-			if !ok {
-				continue
+			if ok {
+				ip = bridge.IPAddress
+			} else {
+				cont, err := a.dockerClient.InspectContainer(c.ID)
+				if err != nil {
+					log.Printf("error inspecting container: %s", err.Error())
+					continue
+				}
+				ip = cont.NetworkSettings.IPAddress
 			}
-			log.Printf("Fusis container ip: %s", bridge.IPAddress)
+			ips = append(ips, ip)
+		}
+		sort.Strings(ips)
+		err = a.applier.Apply(ips, a.FusisAddress)
+		if err != nil {
+			log.Printf("error applying rules using %T: %s", a.applier, err)
 		}
 		select {
 		case <-a.doneCh:
