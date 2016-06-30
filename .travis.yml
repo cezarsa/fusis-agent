@@ -4,6 +4,6 @@ go:
   - 1.6
   - tip
 script:
-  - sudo -E go test ./...
+  - sudo -E govendor test +local
 after_success:
   - bash <(curl -s https://codecov.io/bash)
