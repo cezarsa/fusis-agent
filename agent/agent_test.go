@@ -3,8 +3,8 @@ package agent
 import (
 	"time"
 
-	"github.com/tsuru/go-dockerclient"
-	dockerTesting "github.com/tsuru/go-dockerclient/testing"
+	"github.com/fsouza/go-dockerclient"
+	dockerTesting "github.com/fsouza/go-dockerclient/testing"
 	"gopkg.in/check.v1"
 )
 

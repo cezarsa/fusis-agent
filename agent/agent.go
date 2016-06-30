@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/tsuru/go-dockerclient"
+	"github.com/fsouza/go-dockerclient"
 )
 
 type Agent struct {
@@ -93,7 +93,8 @@ func (a *Agent) spin() {
 			if ok {
 				ip = bridge.IPAddress
 			} else {
-				cont, err := a.dockerClient.InspectContainer(c.ID)
+				var cont *docker.Container
+				cont, err = a.dockerClient.InspectContainer(c.ID)
 				if err != nil {
 					log.Printf("error inspecting container: %s", err.Error())
 					continue
