@@ -5,6 +5,6 @@ go:
   - tip
 install: true
 script:
-  - sudo -E $(which go) test ./...
+  - go list ./... | xargs -I{} sh -c "sudo -E $(which go) test -covermode=atomic -coverprofile=coverage.tmp {} && [ -f coverage.tmp ] && cat coverage.tmp >> coverage.txt && rm coverage.tmp"
 after_success:
   - bash <(curl -s https://codecov.io/bash)
