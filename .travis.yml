@@ -1,0 +1,9 @@
+language: go
+sudo: true
+go:
+  - 1.6
+  - tip
+script:
+  - sudo -E go test ./...
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
