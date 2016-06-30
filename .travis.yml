@@ -5,6 +5,6 @@ go:
   - tip
 install: true
 script:
-  - code=0; for pkg in $(go list ./... | grep -v vendor/); do sudo -E $(which go) test -covermode=atomic -coverprofile=coverage.tmp $pkg || code=$?; (([ -f coverage.tmp ] && cat coverage.tmp >> coverage.txt && rm coverage.tmp) || true); done; (exit $code)
+  - rm -f coverage.txt; code=0; for pkg in $(go list ./... | grep -v vendor/); do sudo -E $(which go) test -covermode=atomic -coverprofile=coverage.tmp $pkg || code=$?; (([ -f coverage.tmp ] && cat coverage.tmp >> coverage.txt && rm -f coverage.tmp) || true); done; (exit $code)
 after_success:
   - bash <(curl -s https://codecov.io/bash)
