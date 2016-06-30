@@ -3,6 +3,7 @@ sudo: true
 go:
   - 1.6
   - tip
+install: true
 script:
   - sudo -E $(which go) test ./...
 after_success:
